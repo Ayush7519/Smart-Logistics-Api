@@ -12,7 +12,7 @@ class JsonFormatter(logging.Formatter):
         # here we create the structure for the log data.
         log_record = {
             "level": record.levelname,
-            "message": record.message,
+            "message": record.getMessage(),
             "timestamp": timezone.now().isoformat(),
         }
 
