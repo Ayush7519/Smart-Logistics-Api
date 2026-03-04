@@ -14,10 +14,7 @@ from rest_framework import status
 from common.exceptions.base import BaseAPIException
 from rest_framework.response import Response
 from rest_framework_simplejwt import tokens
-from rest_framework_simplejwt.token_blacklist.models import (
-    OutstandingToken,
-    BlacklistedToken,
-)
+from users.api.v1.blacklist_token_helper import blacklist_all_refresh_tokens
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
@@ -28,9 +25,20 @@ from django.core.mail import send_mail
 # -----------------------------------------------------------------------------------------------
 # this is the user registration view.
 # -----------------------------------------------------------------------------------------------
-class UserRegisterView(generics.CreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = serializers.UserRegistration_Serializer
+class UserRegisterView(APIView):
+
+    def post(self, request):
+        serializer = serializers.UserRegistration_Serializer(
+            data=request.data,
+            context={"request": request},
+        )
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+
+        return api_response.success_response(
+            data="User registered successfully",
+            request=request,
+        )
 
 
 # -----------------------------------------------------------------------------------------------
@@ -85,6 +93,7 @@ class UserLogOutView(APIView):
             )
         return api_response.success_response(
             data="Logged out successfully.",
+            request=request,
         )
 
 
@@ -105,13 +114,11 @@ class UserPasswordChangeView(APIView):
         user.save()
 
         # here we block all the login user token after they change the password.
-        tokens = OutstandingToken.objects.filter(user=user)
-
-        for token in tokens:
-            BlacklistedToken.objects.get_or_create(token=token)
+        blacklist_all_refresh_tokens(user)
 
         return api_response.success_response(
             data="Password changed successfully.",
+            request=request,
         )
 
 
@@ -119,6 +126,7 @@ class UserPasswordChangeView(APIView):
 # this is the user forget password view.
 # -----------------------------------------------------------------------------------------------
 class PasswordResetRequestView(APIView):
+
     def post(self, request):
         serilaizer = serializers.PasswordResetRequestSerializer(data=request.data)
         serilaizer.is_valid(raise_exception=True)
@@ -146,7 +154,8 @@ class PasswordResetRequestView(APIView):
             )
 
         return api_response.success_response(
-            data="If the email exists, a reset link has been sent."
+            data="If the email exists, a reset link has been sent.",
+            request=request,
         )
 
 
@@ -165,9 +174,9 @@ class PasswordResetConfirmView(APIView):
         user.save()
 
         # blocking all the token of the user from the system.
-        for outstanding in OutstandingToken.objects.filter(user=user):
-            BlacklistedToken.objects.get_or_create(token=outstanding)
+        blacklist_all_refresh_tokens(user)
 
         return api_response.success_response(
-            data="Password has been reset successfully."
+            data="Password has been reset successfully.",
+            request=request,
         )

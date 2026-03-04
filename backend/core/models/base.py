@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 import uuid
+from django.conf import settings
 
 
 # -----------------------------------------------------------------------------------------------
@@ -86,3 +87,49 @@ class BaseModel(models.Model):
 
     class Meta:
         abstract = True
+
+
+# -----------------------------------------------------------------------------------------------
+# this is the log audit model.
+# -----------------------------------------------------------------------------------------------
+class AuditLog(models.Model):
+    ACTION_LEVELS = (
+        ("INFO", "Info"),
+        ("WARNING", "Warning"),
+        ("ERROR", "Error"),
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    action = models.CharField(
+        max_length=100,
+    )
+    message = models.TextField()
+    level = models.CharField(
+        max_length=10,
+        choices=ACTION_LEVELS,
+    )
+    ip_address = models.GenericIPAddressField(
+        null=True,
+        blank=True,
+    )
+    metadata = models.JSONField(
+        null=True,
+        blank=True,
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["action"]),
+            models.Index(fields=["created_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.action} - {self.level}"

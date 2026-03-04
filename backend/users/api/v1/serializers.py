@@ -20,7 +20,7 @@ class UserRegistration_Serializer(serializers.ModelSerializer):
             "email",
             "password",
             "password2",
-            "fullname",
+            "full_name",
         )
 
     def validate(self, attrs):
@@ -105,18 +105,14 @@ class UserPasswordChangeSerializer(serializers.ModelSerializer):
 
         # here checking if the old password match or not.
         if not user.check_password(attrs["old_password"]):
-            raise BaseAPIException(
-                message="Old password is incorrect.",
-                code="INVALID_OLD_PASSWORD",
-                status_code=400,
+            raise serializers.ValidationError(
+                "Old password is incorrect.",
             )
 
         # here we check if the new password match or not.
         if attrs["new_password"] != attrs["confirm_password"]:
-            raise BaseAPIException(
-                message="Passwords do not match.",
-                code="PASSWORD_MISMATCH",
-                status_code=400,
+            raise serializers.ValidationError(
+                "Passwords do not match.",
             )
 
         # using default djagno validation.
@@ -162,23 +158,17 @@ class PasswordResetConfirmSerializer(serializers.ModelSerializer):
             uid = force_str(urlsafe_base64_decode(uid))
             user = User.objects.get(pk=uid)
         except Exception:
-            raise BaseAPIException(
-                message="Invalid reset link.",
-                code="INVALID_LINK",
-                status_code=400,
+            raise serializers.ValidationError(
+                "Invalid reset link.",
             )
         token_generator = PasswordResetTokenGenerator()
         if not token_generator.check_token(user, token):
-            raise BaseAPIException(
-                message="Token is invalid or expired.",
-                code="INVALID_TOKEN",
-                status_code=400,
+            raise serializers.ValidationError(
+                "Token is invalid or expired.",
             )
         if attrs["new_password"] != attrs["confirm_password"]:
-            raise BaseAPIException(
-                message="Passwords do not match.",
-                code="PASSWORD_MISMATCH",
-                status_code=400,
+            raise serializers.ValidationError(
+                "Passwords do not match.",
             )
 
         validate_password(attrs["new_password"], user)
