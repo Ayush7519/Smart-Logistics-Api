@@ -3,7 +3,7 @@ from rest_framework.response import Response
 
 
 # -----------------------------------------------------------------------------------------------
-# here we customize the response data so that its standard through whole project.
+# here we customize the response data so that its standard through whole project.(success)
 # -----------------------------------------------------------------------------------------------
 def success_response(*, data, status_code=200, request=None, meta=None):
     base_meta = {

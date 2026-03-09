@@ -13,7 +13,7 @@ class AuditLogMiddleware(MiddlewareMixin):
         status_code = response.status_code
 
         # here we skip if the request is done by the admin or database health checkup.
-        if request.path.startswith("/admin/"):
+        if request.path.startswith("/admin/", "/static/", "/media/"):
             return response
 
         # taking out the user.

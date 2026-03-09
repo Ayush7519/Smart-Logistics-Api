@@ -13,7 +13,7 @@ urlpatterns = [
     ),
     path(
         "login/",
-        TokenObtainPairView.as_view(),
+        views.UserLoginView.as_view(),
         name="token_obtain_pair",
     ),
     path(
